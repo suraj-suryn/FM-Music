@@ -5,15 +5,17 @@
  */
 import '../global.css';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { Stack, SplashScreen } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useColorScheme } from 'nativewind';
 
-// Keep splash visible until fonts + player are ready
-SplashScreen.preventAutoHideAsync();
+// Only block auto-hide on native — on web there is no splash screen,
+// calling preventAutoHideAsync() creates a white overlay that never clears.
+if (Platform.OS !== 'web') {
+  SplashScreen.preventAutoHideAsync();
+}
 
 // ---------------------------------------------------------------------------
 // RNTP service registration (native only)
@@ -25,8 +27,6 @@ if (Platform.OS !== 'web') {
 }
 
 export default function RootLayout() {
-  const { colorScheme } = useColorScheme();
-
   // Setup audio player
   useEffect(() => {
     (async () => {
@@ -36,7 +36,9 @@ export default function RootLayout() {
       } catch (e) {
         console.warn('[FM App] Audio setup error:', e);
       } finally {
-        SplashScreen.hideAsync();
+        if (Platform.OS !== 'web') {
+          SplashScreen.hideAsync();
+        }
       }
     })();
   }, []);
