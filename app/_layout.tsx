@@ -30,9 +30,14 @@ export default function RootLayout() {
   // Setup audio player
   useEffect(() => {
     (async () => {
-      const { setupPlayer } = await import('../services/audioService');
-      await setupPlayer();
-      SplashScreen.hideAsync();
+      try {
+        const { setupPlayer } = await import('../services/audioService');
+        await setupPlayer();
+      } catch (e) {
+        console.warn('[FM App] Audio setup error:', e);
+      } finally {
+        SplashScreen.hideAsync();
+      }
     })();
   }, []);
 
