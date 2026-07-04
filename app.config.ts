@@ -45,16 +45,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-router',
     'expo-font',
-    [
-      'react-native-track-player',
-      {
-        enableBackgroundRemoteEvents: ['play', 'pause', 'stop', 'next', 'previous'],
-      },
-    ],
   ],
-  experiments: {
-    typedRoutes: true,
-  },
   extra: {
     socketUrl: process.env.EXPO_PUBLIC_SOCKET_URL ?? 'http://localhost:3001',
   },
