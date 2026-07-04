@@ -1,0 +1,17 @@
+services:
+  fm-server:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      # Restrict CORS to your Expo web origin in production:
+      # - CLIENT_ORIGIN=https://your-app.netlify.app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
