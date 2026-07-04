@@ -2,9 +2,8 @@
  * PlayerControls.tsx
  * Play/pause, prev/next, seek bar. Disabled for live streams.
  */
-import React from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
-import Slider from '@react-native-community/slider';
+import React, { useRef } from 'react';
+import { View, TouchableOpacity, Text, GestureResponderEvent } from 'react-native';
 import { usePlayerStore } from '../store/playerStore';
 import * as AudioService from '../services/audioService';
 
@@ -17,6 +16,7 @@ export default function PlayerControls({ isLive = false, compact = false }: Prop
   const playbackState = usePlayerStore((s) => s.playbackState);
   const progress = usePlayerStore((s) => s.progress);
   const duration = usePlayerStore((s) => s.duration);
+  const seekBarRef = useRef<View>(null);
 
   const isPlaying = playbackState === 'playing';
   const isLoading = playbackState === 'loading';
@@ -33,6 +33,17 @@ export default function PlayerControls({ isLive = false, compact = false }: Prop
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleSeek = (e: GestureResponderEvent) => {
+    if (isLive || duration <= 0) return;
+    seekBarRef.current?.measure((_x, _y, width, _h, pageX) => {
+      const touchX = e.nativeEvent.pageX - pageX;
+      const ratio = Math.max(0, Math.min(1, touchX / width));
+      AudioService.seekTo(ratio * duration);
+    });
+  };
+
+  const progressPct = duration > 0 ? `${Math.min(100, (progress / duration) * 100)}%` : '0%';
+
   return (
     <View className="w-full items-center">
       {/* Seek bar */}
@@ -41,16 +52,23 @@ export default function PlayerControls({ isLive = false, compact = false }: Prop
           <Text className="text-xs text-zinc-400 w-10 text-right">
             {formatTime(progress)}
           </Text>
-          <Slider
-            style={{ flex: 1, height: 36 }}
-            minimumValue={0}
-            maximumValue={duration > 0 ? duration : 1}
-            value={progress}
-            onSlidingComplete={(val) => AudioService.seekTo(val)}
-            minimumTrackTintColor="#6366f1"
-            maximumTrackTintColor="#3f3f46"
-            thumbTintColor="#6366f1"
-          />
+          {/* Custom seek bar — works on web + native, no extra dependency */}
+          <View
+            ref={seekBarRef}
+            className="flex-1 h-9 justify-center"
+            onStartShouldSetResponder={() => !isLive}
+            onResponderGrant={handleSeek}
+            onResponderMove={handleSeek}
+            accessibilityRole="adjustable"
+            accessibilityLabel="Seek"
+          >
+            <View className="w-full h-1 rounded-full bg-zinc-700">
+              <View
+                style={{ width: progressPct }}
+                className="h-full rounded-full bg-brand"
+              />
+            </View>
+          </View>
           <Text className="text-xs text-zinc-400 w-10">
             {formatTime(duration)}
           </Text>
